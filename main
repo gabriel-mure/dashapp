@@ -1,0 +1,182 @@
+import dash
+from dash import html
+from dash import dcc
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output, State
+import datetime
+import requests
+from bs4 import BeautifulSoup
+from tkinter import *
+import threading
+import webbrowser
+import time
+
+
+
+
+x=1
+
+
+def open(): 
+    time.sleep(1)
+    webbrowser.open("http://127.0.0.1:8050/")
+
+
+def create_dash_app():
+
+    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+    header_style = {"backgroundColor": "navy", "color": "white"}
+    button_style = {"backgroundColor": "navy", "borderColor": "navy"}
+    button_style1 = {"backgroundColor": "light grey", "borderColor": "navy"}
+    header_style1 = {"backgroundColor": "Green", "color": "white"}
+    
+    app.layout = dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Mot de passe", style=header_style),
+                    dbc.CardBody([
+                        dbc.Input(id="password", type="password", placeholder="Entrez le mot de passe"),
+                        dbc.Button("Confirmer", id="submit-button", className="mt-2", color="secondary"),
+                    ])
+                ], className="mb-3"),
+            ], width=6)
+        ], justify="center"),
+        dbc.Row(id="result", className="justify-content-center"),
+        dbc.Row(id="copy-alert", className="justify-content-center"),
+    
+    ])
+    
+    
+    @app.callback(
+        Output("result", "children"),
+        Input("submit-button", "n_clicks"),
+        State("password", "value")
+    )
+    def show_interface(n_clicks, password):
+        if n_clicks and password == "fez":
+            return dbc.Container([
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader(dcc.Input(id="run1-title", type="text", value="RUN 1", style={"backgroundColor": "navy", "color": "white", "border": "none"}), style=header_style),
+                            dbc.CardBody([dcc.Textarea(id="text1", className="form-control", style={"height": "300px"})])
+                        ], className="mb-3")
+                    ]),
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader(dcc.Input(id="run2-title", type="text", value="RUN 2", style={"backgroundColor": "navy", "color": "white", "border": "none"}), style=header_style),
+                            dbc.CardBody([dcc.Textarea(id="text2", className="form-control", style={"height": "300px"})])
+                        ], className="mb-3")
+                    ]),
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader(dcc.Input(id="run3-title", type="text", value="RUN 3", style={"backgroundColor": "navy", "color": "white", "border": "none"}), style=header_style),
+                            dbc.CardBody([dcc.Textarea(id="text3", className="form-control", style={"height": "300px"})])
+                        ], className="mb-3")
+                    ]),
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader("RUN", style=header_style1),
+                            dbc.CardBody(
+                                [dcc.Textarea(id="text-result", className="form-control", style={"height": "300px"})])
+                        ], className="mb-3")
+                    ])
+                ], justify="center"),
+                dbc.Row([
+                    dbc.Col(dbc.Button("Générer", id="generate-button", style=button_style), width=9),
+                    dbc.Col(dbc.Button("Copier", id="copy-button", color="secondary"), width=1)
+                ], className="d-flex justify-content-center mt-3"),
+            ])
+        
+        
+        
+    @app.callback(
+        Output("text-result", "value"),
+        Input("generate-button", "n_clicks"),
+        State("text1", "value"),
+        State("text2", "value"),
+        State("text3", "value"),
+    )
+    def generate_result(n_clicks, text1, text2, text3):
+        if n_clicks:
+            result = []
+            lines1 = text1.split('\n')
+            lines2 = text2.split('\n')
+            lines3 = text3.split('\n')
+    
+            min_length = min(len(lines1), len(lines2), len(lines3))
+    
+            for i in range(min_length):
+                if i == 0:  # Pour traiter la première ligne, quelle que soit l'entête
+                    result.append(lines1[i])
+                else:
+                    a, b = map(float, lines1[i].split()[-1].split('/'))
+                    c, d = map(float, lines2[i].split()[-1].split('/'))
+                    e, f = map(float, lines3[i].split()[-1].split('/'))
+    
+                    max_value = max(a, c, e)
+                    min_value = min(b, d, f)
+    
+                    # Conversion des nombres en entiers si leurs décimales sont égales à 0
+                    max_value = int(max_value) if max_value.is_integer() else max_value
+                    min_value = int(min_value) if min_value.is_integer() else min_value
+    
+                    res = f"{max_value}/{min_value}"
+                    result.append(lines1[i].split()[0] + " " + res)
+    
+            return '\n'.join(result)
+        return None
+    
+    
+    
+    
+    
+    
+    @app.callback(
+        Output("copy-alert", "children"),
+        Input("copy-button", "n_clicks"),
+        State("text-result", "value")
+            )
+    
+    
+    
+    def copy_to_clipboard(n_clicks, text_result):
+        if n_clicks:
+            try:
+                import pyperclip
+                pyperclip.copy(text_result)
+                return dbc.Alert("Résultat copié dans le presse-papiers", color="success", duration=3000)
+            except Exception as e:
+                return dbc.Alert("Erreur lors de la copie dans le presse-papiers", color="danger", duration=3000)
+        return None
+    
+    
+    return app
+    
+
+def run_dash_app_in_thread():
+    app = create_dash_app()
+    app.run_server(debug=True)
+    
+def start_dash_app():
+    dash_thread = threading.Thread(target=run_dash_app_in_thread)
+    dash_thread.start()
+
+
+if x==1:
+    #open()
+    z=9
+    
+
+
+#if __name__ == '__main__':
+    #app = create_dash_app()
+    #app.run_server(debug=True)
+    
+def open_dash():
+    webbrowser.open("http://127.0.0.1:8050/")
+        
+    
+app = create_dash_app()
+app.run_server(debug=True)
